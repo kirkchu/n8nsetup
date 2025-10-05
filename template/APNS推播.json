@@ -1,0 +1,428 @@
+{
+  "name": "APNS推播",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "8MzIfTiFMtTZ1qMY",
+          "mode": "list",
+          "cachedResultName": "device",
+          "cachedResultUrl": "/projects/IAvryjA88F0H3KRA/datatables/8MzIfTiFMtTZ1qMY"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "deviceId",
+              "keyValue": "={{ $json.body.deviceId }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "deviceId": "={{ $json.body.deviceId }}",
+            "uid": "={{ $json.body.uid }}"
+          },
+          "matchingColumns": [
+            "deviceId"
+          ],
+          "schema": [
+            {
+              "id": "deviceId",
+              "displayName": "deviceId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "uid",
+              "displayName": "uid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "broadcast",
+              "displayName": "broadcast",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        -336
+      ],
+      "id": "d189e2ed-adaa-465f-b041-66900e4f7588",
+      "name": "Upsert row(s)"
+    },
+    {
+      "parameters": {
+        "executeOnce": false,
+        "command": "=TEAM_ID=開發者ID\nTOKEN_KEY_FILE_NAME=./.n8n/AuthKey_JWT編號.p8\nAUTH_KEY_ID=JWT編號\nTOPIC=專案的Bundle Identifier\nDEVICE_TOKEN={{ $json.deviceId }}\n# 測試時使用\nAPNS_HOST_NAME=api.sandbox.push.apple.com\n# 上架後使用\n## APNS_HOST_NAME=api.push.apple.com\n\n\nJWT_ISSUE_TIME=$(date +%s)\nJWT_HEADER=$(printf '{ \"alg\": \"ES256\", \"kid\": \"%s\" }' \"${AUTH_KEY_ID}\" | openssl base64 -e -A | tr -- '+/' '-_' | tr -d =)\nJWT_CLAIMS=$(printf '{ \"iss\": \"%s\", \"iat\": %d }' \"${TEAM_ID}\" \"${JWT_ISSUE_TIME}\" | openssl base64 -e -A | tr -- '+/' '-_' | tr -d =)\nJWT_HEADER_CLAIMS=\"${JWT_HEADER}.${JWT_CLAIMS}\"\nJWT_SIGNED_HEADER_CLAIMS=$(printf \"${JWT_HEADER_CLAIMS}\" | openssl dgst -binary -sha256 -sign \"${TOKEN_KEY_FILE_NAME}\" | openssl base64 -e -A | tr -- '+/' '-_' | tr -d =)\nAUTHENTICATION_TOKEN=\"${JWT_HEADER}.${JWT_CLAIMS}.${JWT_SIGNED_HEADER_CLAIMS}\"\n\nPAYLOAD='{{ $json.content.payload }}'\n\n# echo $JWT_ISSUE_TIME\ncurl -v --header \"apns-topic: $TOPIC\" --header \"apns-push-type: alert\" --header \"authorization: bearer $AUTHENTICATION_TOKEN\" --data \"$PAYLOAD\" --http2 https://${APNS_HOST_NAME}/3/device/${DEVICE_TOKEN}\n\necho \"success\"\nAUTH_KEY_ID=5NNMC3VGJJ\nTOPIC=tw.chainhao.kirkchu.remotepush\nDEVICE_TOKEN={{ $json.deviceId }}\nAPNS_HOST_NAME=api.sandbox.push.apple.com\n\n\nJWT_ISSUE_TIME=$(date +%s)\nJWT_HEADER=$(printf '{ \"alg\": \"ES256\", \"kid\": \"%s\" }' \"${AUTH_KEY_ID}\" | openssl base64 -e -A | tr -- '+/' '-_' | tr -d =)\nJWT_CLAIMS=$(printf '{ \"iss\": \"%s\", \"iat\": %d }' \"${TEAM_ID}\" \"${JWT_ISSUE_TIME}\" | openssl base64 -e -A | tr -- '+/' '-_' | tr -d =)\nJWT_HEADER_CLAIMS=\"${JWT_HEADER}.${JWT_CLAIMS}\"\nJWT_SIGNED_HEADER_CLAIMS=$(printf \"${JWT_HEADER_CLAIMS}\" | openssl dgst -binary -sha256 -sign \"${TOKEN_KEY_FILE_NAME}\" | openssl base64 -e -A | tr -- '+/' '-_' | tr -d =)\nAUTHENTICATION_TOKEN=\"${JWT_HEADER}.${JWT_CLAIMS}.${JWT_SIGNED_HEADER_CLAIMS}\"\n\nPAYLOAD='{{ $json.content.payload }}'\n\n# echo $JWT_ISSUE_TIME\ncurl -v --header \"apns-topic: $TOPIC\" --header \"apns-push-type: alert\" --header \"authorization: bearer $AUTHENTICATION_TOKEN\" --data \"$PAYLOAD\" --http2 https://${APNS_HOST_NAME}/3/device/${DEVICE_TOKEN}\n\necho \"success\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -16
+      ],
+      "id": "f8ccc3c3-05d6-4156-aa29-7a5d01ecf0f1",
+      "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "formTitle": "Send Message",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "title",
+              "placeholder": "標題",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "subtitle",
+              "placeholder": "副標題"
+            },
+            {
+              "fieldLabel": "message",
+              "placeholder": "訊息內容",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "badge",
+              "fieldType": "number",
+              "placeholder": "0"
+            },
+            {
+              "fieldLabel": "to",
+              "placeholder": "對象ID，空白表示群發"
+            }
+          ]
+        },
+        "options": {
+          "path": "iosremotepush/form"
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -800,
+        -112
+      ],
+      "id": "bd5ef762-1ab5-47d1-a57b-c7ab47ebc298",
+      "name": "On form submission",
+      "webhookId": "836a2d00-537d-4a9a-8233-a69099af8c98"
+    },
+    {
+      "parameters": {
+        "content": "## 安裝 curl 步驟\n\n\n\n\n\n\n\n\n\n\n\n\n\n開終端機執行\ndocker exec -it -u root n8n sh -c \"apk add curl\"",
+        "height": 288,
+        "width": 352
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        224,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "11aec66f-99f7-47fb-a06e-55e7f5afb8d8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "iosremotepush/register",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -800,
+        -336
+      ],
+      "id": "1fe1a73a-1f8e-4eb6-9811-dbee9f952c9b",
+      "name": "Register Device",
+      "webhookId": "795e5f33-a379-4a63-b039-15edbd0ee4d5"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n    \"deviceId\": \"{{ $json.deviceId }}\",\n    \"content\": {{ $('Merge').item.json.body.toJsonString().replaceAll(\"'\", '\\\\\"') }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        96,
+        -16
+      ],
+      "id": "59782693-8fed-46be-9c1a-15643e489175",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"body\": {\n    \"to\":  \"{{ $json.to }}\",\n    \"payload\": \"{'aps': {'alert': {'title': '{{ $json.title }}','subtitle': '{{ $json.subtitle }}','body': '{{ $json.message }}'},'badge': {{ $json.badge }},'sound': 'default'}}\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        -112
+      ],
+      "id": "1cec20d6-48c0-468c-be94-58a8c09dbc3c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"body\": {\n    \"to\":  \"{{ $json.body.to }}\",\n    \"payload\": \"{{ $json.body.toJsonString().replaceAll('\"', \"'\") }}\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        80
+      ],
+      "id": "6e44e83a-16fa-4649-964f-19e6a94089d2",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -352,
+        -16
+      ],
+      "id": "6a5579b3-fe87-45a1-8ced-d4f16609e006",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "8MzIfTiFMtTZ1qMY",
+          "mode": "list",
+          "cachedResultName": "device",
+          "cachedResultUrl": "/projects/IAvryjA88F0H3KRA/datatables/8MzIfTiFMtTZ1qMY"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "uid",
+              "keyValue": "={{ $json.body.to }}"
+            },
+            {
+              "keyName": "broadcast",
+              "keyValue": "={{ $json.body.to == \"\" ? null : $json.body.to }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -16
+      ],
+      "id": "3f9f6e30-bb55-4f51-b9a4-be1a29f9ac62",
+      "name": "Get row(s)"
+    },
+    {
+      "parameters": {
+        "content": "## 發送訊息的 Payload format\n\n\n\n\n\n\n\n\n\n\n\n\n在原本 APNS 規定的 Payload 格式中，第一層加上 to，value 中填入要發送對象的 uid，如果為空字串，表示群體發送。\n\n```json\n{\n    \"to\": \"<user_id>\",\n    \"aps\": {\n    }\n}\n```",
+        "height": 416,
+        "width": 432,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1040,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "0a3e4610-949d-47b8-a79d-acacd91fe407",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 註冊裝置的 Payload format\n``` json\n{\n    \"deviceId\": \"<device_token>\",\n    \"uid\": \"<user_id>\"\n}\n```",
+        "height": 304,
+        "width": 432,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1040,
+        -496
+      ],
+      "typeVersion": 1,
+      "id": "bc5dd6b6-8cb3-496d-a0c3-185b2809f06e",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Apple Remote Push Notification\nauthor: 朱克剛\nversion: 0.1",
+        "height": 96,
+        "width": 432,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1040,
+        -608
+      ],
+      "typeVersion": 1,
+      "id": "74d91fa5-7e34-4988-ae3c-9e166a4f9caf",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "iosremotepush/jsonpayload",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -800,
+        112
+      ],
+      "id": "4b28e566-1f73-4985-a9f4-7ba7be0542c5",
+      "name": "Web API",
+      "webhookId": "795e5f33-a379-4a63-b039-15edbd0ee4d5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Register Device": {
+      "main": [
+        [
+          {
+            "node": "Upsert row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web API": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7bed194e-2a32-4b9f-8887-1d216881d748",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cad0e7cf711a72c2d24eb9bb72050a51035d96aebdd242efe758447af0e29b32"
+  },
+  "id": "q8COKldDxUmQme8Z",
+  "tags": [
+    {
+      "createdAt": "2025-10-04T10:24:05.433Z",
+      "updatedAt": "2025-10-04T10:24:05.433Z",
+      "id": "sUnIvZAXSL6lUIxT",
+      "name": "開源"
+    }
+  ]
+}
